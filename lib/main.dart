@@ -1,22 +1,20 @@
 import 'dart:convert';
-
+import 'dart:ffi';
+import 'package:untitled2/utils/dbhelper.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:string_to_hex/string_to_hex.dart';
+import 'package:collection/collection.dart';
 
 void main() {
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-
-
-
-
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-
-
+    // helper.testDB();
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
@@ -56,6 +54,11 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+
+  List<Color> colors = [];
+
+  DbHelper helper = DbHelper();
+
   List<Producto> productos = [];
 
   List<String> cadenas = [];
@@ -74,20 +77,29 @@ class _MyHomePageState extends State<MyHomePage> {
   String body = "";
 
   Future<http.Response> getData() async {
-    final response = await http.get(Uri.parse("https://api.spoonacular.com/food/products/search?query=arroz&number=20&apiKey=979b107215934f4786cde0970b5cfe0a"));
+    final response = await http.get(Uri.parse(
+        "https://api.spoonacular.com/food/products/search?query=arroz&number=20&apiKey=979b107215934f4786cde0970b5cfe0a"));
     return response;
   }
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
     getData().then((response) => {
-      body = utf8.decode(response.bodyBytes),
-      print(jsonDecode(body)["products"]),
-      for(var elemento in jsonDecode(body)["products"]) {
-        productos.add(Producto(elemento["id"], elemento["title"], elemento["image"], elemento["imageType"]))
-      }
-    });
+          body = utf8.decode(response.bodyBytes),
+          // print(jsonDecode(body)["products"]),
+          for (var elemento in jsonDecode(body)["products"])
+            {
+              productos.add(Producto(elemento["id"], elemento["title"],
+                  elemento["image"], elemento["imageType"])),
+              colors.add(Colors.red)
+            },
+          helper.getLists().then((value) => {
+            for(var i in productos){
+              
+            }
+          })
+        });
   }
 
   @override
@@ -104,28 +116,49 @@ class _MyHomePageState extends State<MyHomePage> {
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-      body: Column(
-          children: [
-            const TextField(obscureText: true,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: 'Password',
-              ),),
-            Expanded(
-              child: ListView.builder(
-                  itemCount: productos.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return Card(
-                      child: ListTile(
-                        title: Text(productos[index].title),
-                        leading: Image.network(productos[index].image),
-                        trailing: IconButton(icon: const Icon(Icons.favorite), onPressed: () {  },),
-                      ),
-                    );
-                  }
-              ),
-            )]
-      ),
+      body: Column(children: [
+        const TextField(
+          obscureText: true,
+          decoration: InputDecoration(
+            border: OutlineInputBorder(),
+            labelText: 'Password',
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+              itemCount: productos.length,
+              itemBuilder: (BuildContext context, int index) {
+                return Card(
+                  child: ListTile(
+                    title: Text(productos[index].title),
+                    leading: Image.network(productos[index].image),
+                    trailing: IconButton(
+                      icon: Icon(Icons.favorite, color: colors[index]),
+                      onPressed: () {
+                        // products.title = productos[index].title;
+                        // products.image = productos[index].image;
+                        // products.imageType = productos[index].imageType;
+
+                        setState(() {
+                          if (colors[index] == Colors.amber) {
+                            colors[index] = Colors.red;
+                            helper.deleteProduct(productos[index]);
+                          } else {
+                            colors[index] = Colors.amber;
+                            helper.insertList(productos[index]);
+                          }
+                          helper.getLists().then((value) => {
+                                for (var i in value)
+                                  {print(i.id.toString() + "" + i.image)}
+                              });
+                        });
+                      },
+                    ),
+                  ),
+                );
+              }),
+        )
+      ]),
       floatingActionButton: FloatingActionButton(
         onPressed: _incrementCounter,
         tooltip: 'Increment',
@@ -140,5 +173,15 @@ class Producto {
   String title;
   String image;
   String imageType;
+
   Producto(this.id, this.title, this.image, this.imageType);
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': (id == 0) ? null : id,
+      'title': title,
+      'image': image,
+      'imageType': imageType
+    };
+  }
 }
