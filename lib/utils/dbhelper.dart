@@ -25,12 +25,10 @@ class DbHelper {
     return db!;
   }
 
-
   Future testDB() async {
     db = await openDb();
 
     await db!.execute('INSERT INTO products VALUES (0, "aa", "aa","aa")');
-
 
     List item = await db!.rawQuery('SELECT * FROM products');
 

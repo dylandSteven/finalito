@@ -105,26 +105,26 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: Column(
-        children: [
-          const TextField(obscureText: true,
-            decoration: InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: 'Password',
-            ),),
-          Expanded(
-          child: ListView.builder(
-      itemCount: productos.length,
-            itemBuilder: (BuildContext context, int index) {
-              return Card(
-                child: ListTile(
-                  title: Text(productos[index].title),
-                  leading: Image.network(productos[index].image),
-                  trailing: IconButton(icon: const Icon(Icons.favorite), onPressed: () {  },),
-                ),
-              );
-            }
-      ),
-        )]
+          children: [
+            const TextField(obscureText: true,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Password',
+              ),),
+            Expanded(
+              child: ListView.builder(
+                  itemCount: productos.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    return Card(
+                      child: ListTile(
+                        title: Text(productos[index].title),
+                        leading: Image.network(productos[index].image),
+                        trailing: IconButton(icon: const Icon(Icons.favorite), onPressed: () {  },),
+                      ),
+                    );
+                  }
+              ),
+            )]
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _incrementCounter,
