@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:untitled2/main.dart';
+import 'package:untitled2/models/product.dart';
 
 class DbHelper {
   final int version = 1;
@@ -16,7 +17,7 @@ class DbHelper {
   Future<Database> openDb() async {
     if (db == null) {
       //no existe la BD
-      db = await openDatabase(join(await getDatabasesPath(), 'compras_2.db'),
+      db = await openDatabase(join(await getDatabasesPath(), 'c.db'),
           onCreate: (database, version) {
         database.execute(
             'CREATE TABLE products(id INTEGER PRIMARY KEY, title TEXT, image TEXT,imageType TEXT)');
@@ -33,5 +34,48 @@ class DbHelper {
     List item = await db!.rawQuery('SELECT * FROM products');
 
     print(item[0]);
+  }
+
+  Future<int> insertList(Producto list) async {
+    // await openDb();
+
+    int id = await db!.insert('products', list.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace); //super importante
+    // esta propiedad hace q este metodo funcioen como "insert" y "update"
+
+    return id;
+  }
+
+  Future<List<Producto>> getLists() async {
+    // await openDb();
+
+    final List<Map<String, dynamic>> maps = await db!.query('products');
+    print(maps);
+    return List.generate(maps.length, (i) {
+      return Producto(
+        maps[i]['id'],
+        maps[i]['title'],
+        maps[i]['image'],
+        maps[i]['imageType'],
+        maps[i]['isFavorite'],
+
+      );
+    });
+  }
+
+  Future<int> deleteProduct(Producto item) async {
+    // await openDb();
+
+    int result =
+        await db!.delete("products", where: "id=?", whereArgs: [item.id]);
+    return result;
+  }
+
+  Future<bool> isFavorite(Producto product) async {
+    final List<Map<String, dynamic>> maps =
+        await db!.query('products', where: 'id=?', whereArgs: [product.id]);
+    print('maps->');
+    print(maps.length);
+    return maps.length > 0;
   }
 }
