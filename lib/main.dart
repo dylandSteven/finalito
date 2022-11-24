@@ -1,10 +1,10 @@
 import 'dart:convert';
-import 'dart:ffi';
 import 'package:untitled2/utils/dbhelper.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:string_to_hex/string_to_hex.dart';
 import 'package:collection/collection.dart';
+import 'package:untitled2/models/product.dart';
 
 void main() {
   runApp(MyApp());
@@ -18,170 +18,158 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: list(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class list extends StatefulWidget {
+  const list({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<list> createState() => _listState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  List<Color> colors = [];
-
-  DbHelper helper = DbHelper();
-
+class _listState extends State<list> {
   List<Producto> productos = [];
+  ScrollController? _scrollController;
 
-  List<String> cadenas = [];
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
-  String body = "";
-
-  Future<http.Response> getData() async {
-    final response = await http.get(Uri.parse(
-        "https://api.spoonacular.com/food/products/search?query=arroz&number=20&apiKey=979b107215934f4786cde0970b5cfe0a"));
-    return response;
+  Future initialize() async {
+    //ojo
+    //movies = List<Movie>();
+    loadMore();
+    // initScrollController();
   }
 
   @override
   void initState() {
     super.initState();
-    getData().then((response) => {
-          body = utf8.decode(response.bodyBytes),
-          // print(jsonDecode(body)["products"]),
-          for (var elemento in jsonDecode(body)["products"])
-            {
-              productos.add(Producto(elemento["id"], elemento["title"],
-                  elemento["image"], elemento["imageType"])),
-              colors.add(Colors.red)
-            },
-          helper.getLists().then((value) => {
-            for(var i in productos){
-              
-            }
-          })
-        });
+    initialize();
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: Text('My Moviesss'),
       ),
-      body: Column(children: [
-        const TextField(
-          obscureText: true,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(),
-            labelText: 'Password',
-          ),
-        ),
-        Expanded(
-          child: ListView.builder(
-              itemCount: productos.length,
-              itemBuilder: (BuildContext context, int index) {
-                return Card(
-                  child: ListTile(
-                    title: Text(productos[index].title),
-                    leading: Image.network(productos[index].image),
-                    trailing: IconButton(
-                      icon: Icon(Icons.favorite, color: colors[index]),
-                      onPressed: () {
-                        // products.title = productos[index].title;
-                        // products.image = productos[index].image;
-                        // products.imageType = productos[index].imageType;
-
-                        setState(() {
-                          if (colors[index] == Colors.amber) {
-                            colors[index] = Colors.red;
-                            helper.deleteProduct(productos[index]);
-                          } else {
-                            colors[index] = Colors.amber;
-                            helper.insertList(productos[index]);
-                          }
-                          helper.getLists().then((value) => {
-                                for (var i in value)
-                                  {print(i.id.toString() + "" + i.image)}
-                              });
-                        });
-                      },
-                    ),
-                  ),
-                );
-              }),
-        )
-      ]),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      body: ListView.builder(
+        controller: _scrollController,
+        itemCount: productos.length,
+        itemBuilder: (BuildContext context, int index) {
+          return MyHomePage(productos[index]);
+        },
+      ),
     );
   }
-}
 
-class Producto {
-  int id;
-  String title;
-  String image;
-  String imageType;
+  void loadMore() {
+    String body = "";
 
-  Producto(this.id, this.title, this.image, this.imageType);
+    getData().then((response) => {
+          body = utf8.decode(response.bodyBytes),
 
-  Map<String, dynamic> toMap() {
-    return {
-      'id': (id == 0) ? null : id,
-      'title': title,
-      'image': image,
-      'imageType': imageType
-    };
+          // print(jsonDecode(body)["products"]),
+          for (var elemento in jsonDecode(body)["products"])
+            {
+              setState(() {
+                productos.add(Producto(elemento["id"], elemento["title"],
+                    elemento["image"], elemento["imageType"], false));
+
+                // isFavorite(Producto(elemento["id"], elemento["title"],elemento["image"], elemento["imageType"], favorite));
+              }),
+            },
+          // helper.getLists().then((value) => {for (var i in productos) {}})
+        });
+    // helper!.getUpcoming(page.toString()).then((value) {
+    //   movies += value;
+    //   setState(() {
+    //     moviesCount = movies.length;
+    //     movies = movies;
+    //     page++;
+    //   });
+
+    //   if (movies.length % 20 > 0) {
+    //     loading = false;
+    //   }
+    // });
   }
 }
+
+Future<http.Response> getData() async {
+  final response = await http.get(Uri.parse(
+      "https://api.spoonacular.com/food/products/search?query=arroz&number=20&apiKey=979b107215934f4786cde0970b5cfe0a"));
+  return response;
+}
+
+class MyHomePage extends StatefulWidget {
+  // const MyHomePage({super.key, required this.title});
+  // final String title;
+  final Producto producto;
+  MyHomePage(this.producto);
+
+  @override
+  _MyHomePageState createState() => _MyHomePageState(producto);
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  Producto producto;
+  _MyHomePageState(this.producto);
+
+  late bool favorite;
+  late DbHelper dbHelper;
+  // @override
+  void initState() {
+    favorite = false;
+    dbHelper = DbHelper();
+    isFavorite(producto);
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+          title: Text(widget.producto!.title),
+          leading: Image.network(widget.producto!.image),
+          trailing: IconButton(
+            icon: Icon(Icons.favorite),
+            color: favorite ? Colors.red : Colors.grey,
+            onPressed: () {
+              favorite
+                  ? dbHelper.deleteProduct(producto)
+                  : dbHelper.insertList(producto);
+              setState(() {
+                favorite = !favorite;
+                producto.isFavorite = favorite;
+              });
+            },
+          )),
+    );
+  }
+
+  Future isFavorite(Producto producto) async {
+    await dbHelper.openDb();
+    favorite = await dbHelper.isFavorite(producto);
+    setState(() {
+      producto.isFavorite = favorite;
+    });
+  }
+}
+
+
+
+              // setState(() {
+              //   if (colors[index] == Colors.red) {
+              //     colors[index] = Colors.grey;
+              //     helper.deleteProduct(productos[index]);
+              //   } else {
+              //     colors[index] = Colors.red;
+              //     helper.insertList(productos[index]);
+              //   }
+              //   // helper.getLists().then((value) => {
+                          //       for (var i in value)
+                          //         {print(i.id.toString() + "" + i.image)}
+                          //     });
