@@ -3,7 +3,7 @@ class Producto {
   String title;
   String image;
   String imageType;
-  bool isFavorite;
+  bool ?isFavorite;
 
   Producto(this.id, this.title, this.image, this.imageType,this.isFavorite);
 

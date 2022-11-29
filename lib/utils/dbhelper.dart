@@ -50,14 +50,13 @@ class DbHelper {
     // await openDb();
 
     final List<Map<String, dynamic>> maps = await db!.query('products');
-    print(maps);
     return List.generate(maps.length, (i) {
       return Producto(
         maps[i]['id'],
         maps[i]['title'],
         maps[i]['image'],
         maps[i]['imageType'],
-        maps[i]['isFavorite'],
+      maps[i]['isFavorite'],
 
       );
     });
